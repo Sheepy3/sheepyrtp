@@ -1,5 +1,7 @@
 package towny.sheepy.sheepyrtp.commands;
 
+import com.palmergames.bukkit.towny.object.WorldCoord;
+import com.palmergames.bukkit.towny.TownyAPI;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
@@ -35,7 +37,16 @@ public class rtpcommand implements CommandExecutor {
         Location target;
         int x,y,z;
         Block surface, ground;
+        final int MAX_TRIES = 10_000;
+        int tries = 0;
         do {
+
+            if (++tries > MAX_TRIES) {
+                sender.sendMessage("§cCouldn’t find a safe spot, try again later.");
+                return true;          // bail out gracefully
+            }
+
+
             x = ThreadLocalRandom.current().nextInt(-RADIUS, RADIUS + 1);
             z = ThreadLocalRandom.current().nextInt(-RADIUS, RADIUS + 1);
             y = world.getHighestBlockYAt(x, z);
@@ -55,7 +66,8 @@ public class rtpcommand implements CommandExecutor {
             }
         }while (bad.contains(ground.getType()) ||
             !world.getBlockAt(x,y+1,z).isEmpty() ||
-            !world.getBlockAt(x,y+2,z).isEmpty()
+            !world.getBlockAt(x,y+2,z).isEmpty() ||
+                !isFarFromTowns(world,ground.getChunk().getX(),ground.getChunk().getZ(),15)
         );
 
 
@@ -80,4 +92,20 @@ public class rtpcommand implements CommandExecutor {
         sender.sendMessage("You ran /" + label);
         return true;  // true means “handled” (no usage message)
     }
+
+    private boolean isFarFromTowns(World world, int chunkX, int chunkZ, int safeRadius) {
+        TownyAPI api = TownyAPI.getInstance();
+        String worldName = world.getName();
+
+        for (int dx = -safeRadius; dx <= safeRadius; dx++) {
+            for (int dz = -safeRadius; dz <= safeRadius; dz++) {
+                WorldCoord wc = new WorldCoord(worldName, chunkX + dx, chunkZ + dz);
+                if (!api.isWilderness(wc)) {        // claimed by some Town
+                    return false;                   // too close
+                }
+            }
+        }
+        return true;                                // all nearby chunks are wild
+    }
+
 }
