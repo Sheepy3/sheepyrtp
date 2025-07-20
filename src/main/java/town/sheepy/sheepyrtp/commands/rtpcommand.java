@@ -1,18 +1,22 @@
-package towny.sheepy.sheepyrtp.commands;
+package town.sheepy.sheepyrtp.commands;
 
 import com.palmergames.bukkit.towny.object.WorldCoord;
 import com.palmergames.bukkit.towny.TownyAPI;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+
+import java.util.Collection;
 import java.util.concurrent.ThreadLocalRandom;
-import org.bukkit.Location;
-import org.bukkit.World;
+
 import org.bukkit.entity.Player;
+import org.bukkit.generator.structure.GeneratedStructure;
+import org.bukkit.generator.structure.Structure;
+
 import java.util.Set;
-import org.bukkit.Tag;
+
 public class rtpcommand implements CommandExecutor {
     @Override
     public boolean onCommand(
@@ -29,18 +33,26 @@ public class rtpcommand implements CommandExecutor {
             Material.POWDER_SNOW,
             Material.SEAGRASS
         );
-
+        boolean no_structure = true;
         Player player = (Player) sender;
         World world = player.getWorld();
-        int RADIUS = 200;
+        int RADIUS = 500;
+        if(args.length >0) {
+            try {
+                RADIUS = Integer.parseInt(args[0]);
+            }catch(Exception e){
+                player.sendMessage("argument provided must be an integer.");
+                return true;
+            }
+        }
 
         Location target;
         int x,y,z;
         Block surface, ground;
         final int MAX_TRIES = 10_000;
         int tries = 0;
-        do {
-
+        find_position: do {
+            no_structure = true;
             if (++tries > MAX_TRIES) {
                 sender.sendMessage("§cCouldn’t find a safe spot, try again later.");
                 return true;          // bail out gracefully
@@ -51,11 +63,34 @@ public class rtpcommand implements CommandExecutor {
             z = ThreadLocalRandom.current().nextInt(-RADIUS, RADIUS + 1);
             y = world.getHighestBlockYAt(x, z);
             surface = world.getBlockAt(x,y,z);
-            
+            Chunk chunk = surface.getChunk();
+
             if (surface.isLiquid()){
                 ground = surface;
                 continue;
             }
+
+            Collection<GeneratedStructure> structures = chunk.getStructures(Structure.VILLAGE_DESERT);
+            Set<Structure> blacklisted_structures = Set.of(
+                    Structure.VILLAGE_DESERT,
+                    Structure.VILLAGE_PLAINS,
+                    Structure.VILLAGE_SAVANNA,
+                    Structure.VILLAGE_SNOWY,
+                    Structure.VILLAGE_TAIGA,
+                    Structure.IGLOO,
+                    Structure.MANSION,
+                    Structure.MONUMENT,
+                    Structure.SWAMP_HUT,
+                    Structure.PILLAGER_OUTPOST
+            );
+            for (Structure structure : blacklisted_structures) {
+                if (!chunk.getStructures(structure).isEmpty()) {
+                    no_structure = false;
+
+                }
+            }
+
+
             ground = surface;
             while(y>world.getMinHeight()
                     && (Tag.LEAVES.isTagged(ground.getType())
@@ -67,7 +102,8 @@ public class rtpcommand implements CommandExecutor {
         }while (bad.contains(ground.getType()) ||
             !world.getBlockAt(x,y+1,z).isEmpty() ||
             !world.getBlockAt(x,y+2,z).isEmpty() ||
-                !isFarFromTowns(world,ground.getChunk().getX(),ground.getChunk().getZ(),15)
+            !isFarFromTowns(world,ground.getChunk().getX(),ground.getChunk().getZ(),15) ||
+            !no_structure
         );
 
 

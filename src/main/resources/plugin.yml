@@ -1,12 +1,12 @@
 name: sheepyrtp
 version: '1.0'
-main: towny.sheepy.sheepyrtp.Sheepyrtp
+main: town.sheepy.sheepyrtp.Sheepyrtp
 api-version: '1.21'
 
 
 commands:
   rtp:
     description: randomly teleports player to position not within a blacklist of chunks.
-    usage: /rtp
+    usage: /rtp [radius]
 
 softdepend: [Towny]

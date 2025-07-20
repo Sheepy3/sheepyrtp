@@ -1,7 +1,7 @@
-package towny.sheepy.sheepyrtp;
+package town.sheepy.sheepyrtp;
 
 import org.bukkit.plugin.java.JavaPlugin;
-import towny.sheepy.sheepyrtp.commands.rtpcommand;
+import town.sheepy.sheepyrtp.commands.rtpcommand;
 
 public final class Sheepyrtp extends JavaPlugin {
 
