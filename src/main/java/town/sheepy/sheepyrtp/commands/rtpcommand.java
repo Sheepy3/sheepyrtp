@@ -103,7 +103,9 @@ public class rtpcommand implements CommandExecutor {
             !world.getBlockAt(x,y+1,z).isEmpty() ||
             !world.getBlockAt(x,y+2,z).isEmpty() ||
             !isFarFromTowns(world,ground.getChunk().getX(),ground.getChunk().getZ(),15) ||
-            !no_structure
+            !no_structure ||
+            ground.getY() <= 63||
+            ground.getY() > 150
         );
 
 
@@ -125,7 +127,7 @@ public class rtpcommand implements CommandExecutor {
            //     target.getBlockZ());
 
         // your logic here
-        sender.sendMessage("You ran /" + label);
+        //sender.sendMessage("You ran /" + label);
         return true;  // true means “handled” (no usage message)
     }
 
