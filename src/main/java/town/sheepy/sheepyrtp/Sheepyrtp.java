@@ -9,7 +9,7 @@ public final class Sheepyrtp extends JavaPlugin {
     public void onEnable() {
         getLogger().info("sheepyRTP is now enabled!");
         this.getCommand("rtp")
-                .setExecutor(new rtpcommand());
+                .setExecutor(new rtpcommand(this));
         // Plugin startup logic
 
     }
