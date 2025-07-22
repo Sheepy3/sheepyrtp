@@ -33,7 +33,21 @@ public class rtpcommand implements CommandExecutor {
     );
     private static final Set<Material> BAD_GROUND = Set.of(
             Material.WATER, Material.LAVA,
-            Material.CACTUS, Material.POWDER_SNOW
+            Material.CACTUS, Material.POWDER_SNOW,
+            Material.BROWN_MUSHROOM_BLOCK, Material.RED_MUSHROOM_BLOCK,
+            Material.MUSHROOM_STEM
+    );
+    private static final Set<Structure> STRUCTURE_BLACKLIST = Set.of(
+            Structure.VILLAGE_DESERT,
+            Structure.VILLAGE_PLAINS,
+            Structure.VILLAGE_SAVANNA,
+            Structure.VILLAGE_SNOWY,
+            Structure.VILLAGE_TAIGA,
+            Structure.IGLOO,
+            Structure.MANSION,
+            Structure.MONUMENT,
+            Structure.SWAMP_HUT,
+            Structure.PILLAGER_OUTPOST
     );
 
     /* ───────────── /rtp handler ───────────── */
@@ -67,7 +81,7 @@ public class rtpcommand implements CommandExecutor {
         w.getChunkAtAsync(cx, cz, true).thenAcceptAsync(chunk -> {
             /* B ‑‑ schedule validation on main */
             Bukkit.getScheduler().runTask(plugin, () -> {
-                if (validateChunkSpot(w, x, z, SAFE_CHUNK_BUF)) {
+                if (validateChunkSpot(w, x, z, chunk, SAFE_CHUNK_BUF)) {
                     Location tp = calcTeleportLocation(w, x, z);
                     p.teleport(tp);
                     if (whisper != null) {
@@ -87,7 +101,13 @@ public class rtpcommand implements CommandExecutor {
 
     /* ───────── main‑thread validation ───────── */
     /* 1 ─ validation */
-    private boolean validateChunkSpot(World w, int x, int z, int safeChunks) {
+    private boolean validateChunkSpot(World w, int x, int z, Chunk chunk, int safeChunks) {
+
+        for (Structure s : STRUCTURE_BLACKLIST) {
+            if (!chunk.getStructures(s).isEmpty()) {
+                return false;                  // too close to a structure
+            }
+        }
 
         int y = findGroundY(w, x, z);                 // <-- use helper
         Block ground = w.getBlockAt(x, y, z);
